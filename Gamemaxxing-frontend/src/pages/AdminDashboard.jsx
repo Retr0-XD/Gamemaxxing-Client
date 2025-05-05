@@ -1,50 +1,122 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import AdminTable from '../components/AdminTable'
-import { Button } from '../components/ui/button'
+import AdminHeader from '../components/AdminHeader'
 import { getGames, deleteGame } from '../lib/api'
+import { useAuth } from '../lib/authContext.jsx'
 
 export default function AdminDashboard() {
   const [games, setGames] = useState([])
   const [error, setError] = useState(null)
-  const [token, setToken] = useState('')
+  const [loading, setLoading] = useState(true)
+  const { token, isAuthenticated } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    getGames()
-      .then((data) => setGames(data))
-      .catch((err) => setError(err.message))
-  }, [])
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      navigate('/admin/login')
+      return
+    }
 
-  const handleDelete = async (id) => {
+    setLoading(true)
+    getGames()
+      .then((data) => {
+        console.log("Admin - Fetched games:", data)
+        setGames(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error("Admin - Error fetching games:", err)
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [isAuthenticated, navigate])
+
+  const handleDelete = async (id) => {    
+    if (!confirm("Are you sure you want to delete this game?")) {
+      return
+    }
+    
     try {
       await deleteGame(id, token)
       setGames(games.filter((game) => game.id !== id))
     } catch (err) {
       setError(err.message)
+      alert("Error deleting game: " + err.message)
     }
   }
 
-  if (error) return <div className="text-center text-red-500">Error: {error}</div>
+  if (!isAuthenticated) {
+    return null // Will redirect in useEffect
+  }
+
+  if (error) return (
+    <div style={{maxWidth: '80rem', margin: '0 auto', padding: '1rem'}}>
+      <AdminHeader />
+      
+      <div style={{textAlign: 'center', padding: '2rem', backgroundColor: '#FEF2F2', borderRadius: '0.5rem', border: '1px solid #FECACA', maxWidth: '36rem', margin: '2.5rem auto'}}>
+        <svg xmlns="http://www.w3.org/2000/svg" style={{height: '3rem', width: '3rem', margin: '0 auto 1rem', color: '#EF4444'}} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <h2 style={{fontSize: '1.25rem', fontWeight: 'bold', color: '#B91C1C', marginBottom: '0.5rem'}}>Error Loading Games</h2>
+        <p style={{color: '#DC2626'}}>{error}</p>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-      <div className="mb-4">
-        <label htmlFor="token" className="block text-sm font-medium">
-          Admin Token
-        </label>
-        <input
-          id="token"
-          type="password"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          className="mt-1 block w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-        />
+    <div style={{maxWidth: '80rem', margin: '0 auto', padding: '1rem'}}>
+      <AdminHeader />
+      
+      <h1 style={{fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '1rem'}}>Admin Dashboard</h1>
+      
+      <div style={{marginBottom: '1rem'}}>
+        <Link 
+          to="/admin/new" 
+          style={{
+            display: 'inline-block',
+            backgroundColor: '#4F46E5',
+            color: 'white',
+            fontWeight: '500',
+            padding: '0.5rem 1rem',
+            borderRadius: '0.375rem',
+            textDecoration: 'none'
+          }}
+        >
+          Add New Game
+        </Link>
       </div>
-      <Button asChild className="mb-4">
-        <Link to="/admin/new">Add New Game</Link>
-      </Button>
-      <AdminTable games={games} onDelete={handleDelete} />
+      
+      {loading ? (
+        <div style={{display: 'flex', justifyContent: 'center', padding: '3rem 0'}}>
+          <div style={{
+            animation: 'spin 1s linear infinite',
+            borderRadius: '9999px',
+            height: '3rem',
+            width: '3rem',
+            borderTop: '4px solid #4F46E5',
+            borderRight: '4px solid transparent',
+            borderBottom: '4px solid transparent',
+            borderLeft: '4px solid transparent'
+          }}></div>
+        </div>
+      ) : (
+        <AdminTable games={games} onDelete={handleDelete} />
+      )}
+      
+      <style>
+        {`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}
+      </style>
     </div>
   )
 }

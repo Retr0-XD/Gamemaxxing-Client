@@ -1,40 +1,26 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { cva } from "class-variance-authority"
-import { cn } from "../../lib/utils"
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled" +
-  " disabled:pointer-events-none disabled:opacity-50",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-red-500 text-white shadow-sm hover:bg-red-500/90",
-        outline: "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
-
-const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
+const Button = React.forwardRef(({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
+  
+  // Simple styling based on variants
+  let variantClass = "bg-indigo-600 text-white hover:bg-indigo-700"; // default
+  if (variant === "destructive") variantClass = "bg-red-500 text-white hover:bg-red-600";
+  if (variant === "outline") variantClass = "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50";
+  if (variant === "secondary") variantClass = "bg-gray-200 text-gray-800 hover:bg-gray-300";
+  if (variant === "ghost") variantClass = "bg-transparent text-gray-700 hover:bg-gray-100";
+  if (variant === "link") variantClass = "bg-transparent text-indigo-600 hover:underline";
+  
+  // Simple sizing
+  let sizeClass = "px-4 py-2"; // default
+  if (size === "sm") sizeClass = "px-3 py-1 text-sm";
+  if (size === "lg") sizeClass = "px-6 py-3 text-lg";
+  if (size === "icon") sizeClass = "p-2";
+  
   return (
     <Comp
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={`inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none disabled:opacity-50 ${variantClass} ${sizeClass} ${className || ""}`}
       ref={ref}
       {...props}
     />
@@ -42,4 +28,4 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
 })
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+export { Button }
