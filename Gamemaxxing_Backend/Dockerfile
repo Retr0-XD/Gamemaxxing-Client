@@ -1,17 +1,17 @@
 # Stage 1: Build
 FROM maven AS build
-WORKDIR /Gamemaxxing_Backend
-RUN pwd
+WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests && ls -alh /app/target
+
 
 # Stage 2: Runtime
 FROM openjdk:17-jdk-slim
-WORKDIR /Gamemaxxing_Backend
+WORKDIR /app
 
-# Copy built JAR from the builder stage
-COPY --from=build /Gamemaxxing_Backend/target/gamemaxxing-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
+
 
 # Set environment variable
 ENV SPRING_DATASOURCE_URL=jdbc:sqlite:/app/games.db
