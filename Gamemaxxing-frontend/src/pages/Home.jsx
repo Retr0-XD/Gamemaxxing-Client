@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import GameCard from '../components/GameCard'
-import { getGames, getPlaceholderGames } from '../lib/api'
+import { getGames, getPlaceholderGames, addGame } from '../lib/api'
 
 export default function Home() {
   const [games, setGames] = useState([])
@@ -13,8 +13,23 @@ export default function Home() {
   useEffect(() => {
     setLoading(true);
     Promise.all([getGames(), getPlaceholderGames()])
-      .then(([userGames, placeholderGames]) => {
-        const combinedGames = [...placeholderGames, ...userGames];
+      .then(async ([userGames, placeholderGames]) => {
+        const combinedGames = [...userGames];
+
+        for (const game of placeholderGames) {
+          const existsInBackend = userGames.some((userGame) => userGame.id === game.id);
+          if (!existsInBackend) {
+            try {
+              const savedGame = await addGame(game, 'Bearer YOUR_AUTH_TOKEN'); // Replace with actual token
+              combinedGames.push(savedGame);
+            } catch (err) {
+              console.error(`Error saving game ${game.title} to backend:`, err);
+            }
+          } else {
+            combinedGames.push(game);
+          }
+        }
+
         setGames(combinedGames);
         setLoading(false);
       })
