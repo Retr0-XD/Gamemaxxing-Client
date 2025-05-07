@@ -20,10 +20,20 @@ export default function Home() {
           const existsInBackend = userGames.some((userGame) => userGame.id === game.id);
           if (!existsInBackend) {
             try {
-              const savedGame = await addGame(game, 'Bearer ifyoucanseethisdontdestroygames'); // Replace with actual token
+              const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
+              if (!token) {
+                console.error('No authentication token found. Please log in.');
+                continue;
+              }
+
+              const savedGame = await addGame(game, `Bearer ${token}`);
               combinedGames.push(savedGame);
             } catch (err) {
-              console.error(`Error saving game ${game.title} to backend:`, err);
+              if (err.response && err.response.status === 403) {
+                console.error(`Authorization error while saving game ${game.title}. Please check your permissions.`);
+              } else {
+                console.error(`Error saving game ${game.title} to backend:`, err);
+              }
             }
           } else {
             combinedGames.push(game);
