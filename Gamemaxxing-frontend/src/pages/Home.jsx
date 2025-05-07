@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import GameCard from '../components/GameCard'
 import { getGames, getPlaceholderGames, addGame } from '../lib/api'
+import { useAuth } from '../lib/authContext';
 
 export default function Home() {
   const [games, setGames] = useState([])
@@ -9,6 +10,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
+
+  const { token } = useAuth();
 
   useEffect(() => {
     setLoading(true);
@@ -20,7 +23,6 @@ export default function Home() {
           const existsInBackend = userGames.some((userGame) => userGame.id === game.id);
           if (!existsInBackend) {
             try {
-              const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
               if (!token) {
                 console.error('No authentication token found. Please log in.');
                 continue;
@@ -48,7 +50,7 @@ export default function Home() {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [token]);
 
   const filteredGames = games.filter(game => 
     (activeCategory === 'All' || (game.tags && game.tags.toLowerCase().includes(activeCategory.toLowerCase()))) &&
