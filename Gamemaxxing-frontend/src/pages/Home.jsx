@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import GameCard from '../components/GameCard'
-import { getGames } from '../lib/api'
+import { getGames, getPlaceholderGames } from '../lib/api'
 
 export default function Home() {
   const [games, setGames] = useState([])
@@ -11,19 +11,19 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState('All')
 
   useEffect(() => {
-    setLoading(true)
-    getGames()
-      .then((data) => {
-        console.log("Fetched games:", data);  // Debug log
-        setGames(data)
-        setLoading(false)
+    setLoading(true);
+    Promise.all([getGames(), getPlaceholderGames()])
+      .then(([userGames, placeholderGames]) => {
+        const combinedGames = [...placeholderGames, ...userGames];
+        setGames(combinedGames);
+        setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching games:", err);  // Debug log
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [])
+        console.error("Error fetching games:", err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const filteredGames = games.filter(game => 
     (activeCategory === 'All' || (game.tags && game.tags.toLowerCase().includes(activeCategory.toLowerCase()))) &&
