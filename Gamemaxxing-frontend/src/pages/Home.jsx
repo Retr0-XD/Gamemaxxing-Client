@@ -20,7 +20,7 @@ export default function Home() {
           const existsInBackend = userGames.some((userGame) => userGame.id === game.id);
           if (!existsInBackend) {
             try {
-              const savedGame = await addGame(game, 'Bearer YOUR_AUTH_TOKEN'); // Replace with actual token
+              const savedGame = await addGame(game, 'Bearer ifyoucanseethisdontdestroygames'); // Replace with actual token
               combinedGames.push(savedGame);
             } catch (err) {
               console.error(`Error saving game ${game.title} to backend:`, err);
